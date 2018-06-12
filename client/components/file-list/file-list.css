@@ -1,0 +1,16 @@
+.file-list {
+  width: 800px;
+  margin: auto;
+}
+
+.file-list__title {
+  text-align: center;
+}
+
+.file-list__list {
+  padding: 0;
+}
+
+.file-list__list li {
+  list-style-type: none;
+}

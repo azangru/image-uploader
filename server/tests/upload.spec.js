@@ -12,7 +12,7 @@ describe('Image uploader', () => {
     try {
       const response = await request(app)
       .post('/upload')
-      .attach('image', pathToImage)
+      .attach('images[]', pathToImage)
       .expect(200);
       console.log('response', response.body);
     } catch (error) {

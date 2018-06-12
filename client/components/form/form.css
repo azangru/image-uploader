@@ -1,0 +1,20 @@
+.form {
+  width: 800px;
+  margin: auto;
+}
+
+.form__title {
+  text-align: center;
+}
+
+.form__file-input {
+  display: none;
+}
+
+.form__selected-files {
+  padding: 0;
+}
+
+.form__selected-files li {
+  list-style-type: none;
+}
