@@ -7,7 +7,8 @@
     "dev": "rm -rf ./build && concurrently \"npm run dev-client\" \"npm run dev-server\"",
     "dev-client": "NODE_ENV=development webpack-dev-server --env.mode development --config ./webpack/webpack.config.babel.js",
     "dev-server": "NODE_ENV=development nodemon ./server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "NODE_ENV=production webpack --env.mode production --config ./webpack/webpack.config.babel.js",
+    "prod": "node ./server/index.js",
     "tdd": "jest --config ./jest.server.config.js --watchAll"
   },
   "keywords": [],
