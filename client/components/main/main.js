@@ -20,10 +20,13 @@ class Main extends Component {
   }
 
   handleSubmit = async () => {
+    if (!this.state.files.length) return;
+
     const formData = new FormData();
     this.state.files.forEach(file => {
       formData.append('images[]', file, file.name);
     });
+
     try {
       this.setState({ loading: true });
       const { data: uploadedFileUrls } = await axios({

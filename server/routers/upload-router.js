@@ -52,6 +52,9 @@ uploadRouter.post('/', upload.any(), async (req, res) => {
 
     imageUrls.push(`${config.publicPath}/${fileNameWithHash}`);
   }
+
+  await fileHelpers.removeDirectory(tempDirectoryPath);
+
   res.json(imageUrls);
 });
 
