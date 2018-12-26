@@ -1,61 +1,43 @@
-const path = require('path');
 const Busboy = require('busboy');
 const fs = require('fs');
+const crypto = require('crypto');
 
 const fileHelpers = require('../helpers/file-helpers');
-const hashHelpers = require('../helpers/hash-helpers');
 
 const config = require('../../config');
-
-// https://github.com/mscdex/busboy
-// https://gist.github.com/shobhitg/5b367f01b6daf46a0287
-
-/*
-
-const destination = config.uploadFolderPath;
-
-const getTemporaryStorageDirectoryName = (req) => {
-  return path.resolve(config.tempStoragePath, req.uuid);
-};
-
-const storage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const destination = getTemporaryStorageDirectoryName(req);
-    await fileHelpers.ensureDirectory(destination);
-    cb(null, destination);
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.originalname + '-' + Date.now());
-  }
-});
-
-*/
 
 function saveFilesToTemporaryDirectory(req) {
   return new Promise((resolve) => {
     const busboy = new Busboy({ headers: req.headers });
-    const tempDir = config.tempStoragePath;
+    const publicFilePaths = [];
 
     let openWriteStreams = 0;
 
     busboy.on('file', function(fieldname, file, filename) {
       openWriteStreams++;
-      const tempFileName = getTempFilename(filename, req);
-      const writeStream = fs.createWriteStream(`${tempDir}/${tempFileName}`);
+      const hash = crypto.createHash('md5');
+      const tempFilePath = getTempFilePath(filename, req);
+      const writeStream = fs.createWriteStream(tempFilePath);
 
-      writeStream.on('finish', () => {
+      file.on('data', function(chunk) {
+        hash.update(chunk);
+      });
+
+      writeStream.on('finish', async () => {
         openWriteStreams--;
+        const hashedFileContent = hash.digest('hex');
+        const finalFileName = getFinalFileName(filename, hashedFileContent);
+        const uploadFilePath = getFinalFilePath(finalFileName);
+        const publicFilePath = getPublicFilePath(finalFileName);
+
+        await fileHelpers.moveFile(tempFilePath, uploadFilePath);
+        publicFilePaths.push(publicFilePath);
+
         if (openWriteStreams === 0) {
-          resolve(tempFileName);
+          resolve(publicFilePaths);
         }
       });
 
-      // file.on('data', () => {
-      //   console.log('receiving data');
-      // });
-      // file.on('end', () => {
-      //   console.log('file ended');
-      // });
       file.pipe(writeStream);
     });
 
@@ -63,7 +45,32 @@ function saveFilesToTemporaryDirectory(req) {
   });
 }
 
+function getTempFilePath(filename, req) {
+  const tempDir = config.tempStoragePath;
+  const fileName = getTempFilename(filename, req);
+  return `${tempDir}/${fileName}`;
+}
+
 function getTempFilename(filename, req) {
+  const { name, extension } = splitFilename(filename);
+  return `${name}-${req.uuid}-${Date.now()}.${extension}`;
+}
+
+function getFinalFilePath(filename) {
+  const uploadDir = config.uploadFolderPath;
+  return `${uploadDir}/${filename}`;
+}
+
+function getFinalFileName(filename, hash) {
+  const { name, extension } = splitFilename(filename);
+  return `${name}-${hash}.${extension}`;
+}
+
+function getPublicFilePath(filename) {
+  return `${config.publicPath}/${filename}`;
+}
+
+function splitFilename(filename) {
   const [ name, extension ] = filename.split('.').reduce((result, part, index, parts) => {
     if (index === parts.length - 1) {
       return [ result, part ];
@@ -71,7 +78,7 @@ function getTempFilename(filename, req) {
       return result + '.' + part;
     }
   });
-  return `${name}-${req.uuid}-${Date.now()}.${extension}`;
+  return { name, extension };
 }
 
 module.exports = {
