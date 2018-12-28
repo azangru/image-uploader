@@ -2,7 +2,8 @@ const Busboy = require('busboy');
 const fs = require('fs');
 const crypto = require('crypto');
 
-const fileHelpers = require('../helpers/file-helpers');
+const fileHelpers = require('./file-helpers');
+const pathHelpers = require('./path-helpers');
 
 const config = require('../../config');
 
